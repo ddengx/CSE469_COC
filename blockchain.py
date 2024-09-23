@@ -1,4 +1,7 @@
 
+#EXAMPLE: https://www.youtube.com/watch?v=umLm_ES-fvk&ab_channel=CameronHartmann
+#This is from the slides
+
 # TODO: Implement blockchain class here
 
 # Required block struct below
@@ -13,7 +16,11 @@
 #D_length = 14, # 04 bytes
 #Data = b"Initial block\0"
 
+#REMEMBER:
+#All block data must be stored in a binary format.
+
 import os
+import sys
 from block import Block
 import argparse
 
@@ -22,31 +29,20 @@ class Blockchain:
     def __init__(self):
         self.chain = []
 
-        self.load_blockchain()
-
     # Import blockchain data
     # Nab from environ
     # Add checks for absence of, or lack thereof, blocks here
     def load_blockchain(self):
-    # Add a part to load up a JSON or CSV file
+        bhocFilePath = os.environ.get('BCHOC_FILE_PATH')
+
+        if bhocFilePath is None:
+            #This means init will determine and make new file.
+            pass
+        else:
+            #TODO: Add logic to parse through BHOC file given
+            print("do something")
 
 
-class Block:
-    def __init__(self) -> None:
-        pass
-
-    # Add an initial block if there is none
-    def init_blockchain(self):
-        pass
-
-
-    # Append
-    def add_block(self, block):
-        pass
-
-    # Verify the chain
-    def verify(self):
-        pass
 
 def add(args):
     print(f"Adding item(s)")
@@ -81,7 +77,26 @@ def init(args):
 
 
 def verify(args):
-    print("Verifying blockchain")
+    if MainBlockchain.chain:
+        ##TODO: ADD a search to check initial block type vibes
+        print("Blockchain file found with INITIAL block.")
+    else:
+        print("Blockchain file not found. Created INITIAL block.")
+        newBlock = Block(
+                0,
+                0,
+                b"0"*32,
+                b"0"*32,
+                b"INITIAL\0\0\0\0\0",
+                b"\0"*12, 
+                b"\0"*12,
+                14,
+                b"Initial block\0"
+            )
+        MainBlockchain.chain.append(newBlock)
+
+        #TODO: add a thing for creating a file path or something later
+        #So after we call init, it can recognize that we have a block in it
 
 
 def main():
@@ -157,6 +172,7 @@ def main():
 
     except Exception as error:
         print(f"An error occurred: {error}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
