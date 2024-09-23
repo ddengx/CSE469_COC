@@ -9,7 +9,11 @@ class Blockchain:
 
 class Block:
     def __init__(self) -> None:
-        pass
+        self.hash = 0
+        self.timeStamp = 0
+        self.caseID = 0
+        self.evidenceID = 0
+        self.state = 0
 
 
 def add(args):
@@ -42,6 +46,17 @@ def remove(args):
 
 def init(args):
     print("Initializing blockchain")
+
+    # INITIAL BLOCK =  
+    # Prev_hash = 0,  # 32 bytes
+    # Timestamp = 0,  # 08 bytes
+    # Case_id = b"0"*32,      # 32 bytes (32 zero's)
+    # Evidence_id = b"0"*32,  # 32 bytes (32 zero's)
+    # State = b"INITIAL\0\0\0\0\0",  # 12 bytes
+    # creator = b"\0"*12,     # 12 bytes (12 null bytes)
+    # owner = b"\0"*12,       # 12 bytes (12 null bytes)
+    # D_length = 14,  # 04 bytes
+    # Data = b"Initial block\0"
 
 
 def verify(args):
