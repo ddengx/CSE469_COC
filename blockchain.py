@@ -23,24 +23,12 @@ import os
 import sys
 from block import Block
 import argparse
+import struct
 
 
 class Blockchain:
     def __init__(self):
         self.chain = []
-
-    # Import blockchain data
-    # Nab from environ
-    # Add checks for absence of, or lack thereof, blocks here
-    def load_blockchain(self):
-        bhocFilePath = os.environ.get('BCHOC_FILE_PATH')
-
-        if bhocFilePath is None:
-            #This means init will determine and make new file.
-            pass
-        else:
-            #TODO: Add logic to parse through BHOC file given
-            print("do something")
 
 
 
@@ -73,14 +61,9 @@ def remove(args):
 
 
 def init(args):
-    print("Initializing blockchain")
-
-
-def verify(args):
-    if MainBlockchain.chain:
-        ##TODO: ADD a search to check initial block type vibes
-        print("Blockchain file found with INITIAL block.")
-    else:
+    bhocFilePath = os.environ.get('BCHOC_FILE_PATH')
+    givenFormat = "32s d 32s 32s 12s 12s 12s I"
+    if bhocFilePath is None:
         print("Blockchain file not found. Created INITIAL block.")
         newBlock = Block(
                 0,
@@ -94,9 +77,33 @@ def verify(args):
                 b"Initial block\0"
             )
         MainBlockchain.chain.append(newBlock)
+        packedData = struct.pack(givenFormat,newBlock.prevHash,newBlock.
+                                 timestamp,newBlock.caseID,newBlock.evidenceID,
+                                 newBlock.state,newBlock.creator,newBlock.owner,newBlock.data)
+        #TODO: Most likely write this in a file and also declare file path for recognizing again.
+    else:
+        #TODO: Add logic to parse through BHOC file given
+        #WTF DOES THE FILE LOOK LIKE?????
+        # INITIAL BLOCK =  
+        # Prev_hash = 0,  # 32 bytes
+        # Timestamp = 0,  # 08 bytes
+        # Case_id = b"0"*32,      # 32 bytes (32 zero's)
+        # Evidence_id = b"0"*32,  # 32 bytes (32 zero's)
+        # State = b"INITIAL\0\0\0\0\0",  # 12 bytes
+        # creator = b"\0"*12,     # 12 bytes (12 null bytes)
+        # owner = b"\0"*12,       # 12 bytes (12 null bytes)
+        # D_length = 14,  # 04 bytes
+        # Data = b"Initial block\0"
+        with open(bhocFilePath, 'rb') as file:
+            data = file.read(144)
+            previousHash, timeStamp, caseId, evidenceId, state, creator, owner, dataLength = struct.unpack(givenFormat, data)
+            
 
-        #TODO: add a thing for creating a file path or something later
-        #So after we call init, it can recognize that we have a block in it
+
+def verify(args):
+    print("going through and verifying")
+
+
 
 
 def main():
