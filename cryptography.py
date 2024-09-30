@@ -1,4 +1,5 @@
 from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
 import os
 
 DEFAULT_KEY = b"R0chLi4uLi4uLi4="
@@ -9,7 +10,7 @@ def encrypt(data):
     Encrypts data
     """
     cipher = AES.new(AES_KEY, AES.MODE_ECB)
-    paddedData = data.encode('utf-8').ljust(32, b'\0') # ljust (left adjust) to adjust for padding
+    paddedData = pad(data.encode('utf-8'), AES.block_size)
     return cipher.encrypt(paddedData)
 
 def decrypt(data):
@@ -18,4 +19,4 @@ def decrypt(data):
     """
     cipher = AES.new(AES_KEY, AES.MODE_ECB)
     decryptedData = cipher.decrypt(data)
-    return decryptedData.rstrip(b'\0').decode('utf-8')
+    return unpad(decryptedData, AES.block_size).decode('utf-8')
