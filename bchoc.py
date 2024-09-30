@@ -1,17 +1,9 @@
-import argparse
-import sys
-import blockchain
-import commandHandlers
+# Completed main script file
+# Parses command line commands
+# Calls the wrapper interface commandHandlers.py
 
-# bchoc add -c case_id -i item_id [-i item_id ...] -g creator -p password(creator’s)
-# bchoc checkout -i item_id -p password
-# bchoc checkin -i item_id -p password
-# bchoc show cases 
-# bchoc show items -c case_id
-# bchoc show history [-c case_id] [-i item_id] [-n num_entries] [-r] -p password
-# bchoc remove -i item_id -y reason -p password(creator’s)
-# bchoc init
-# bchoc verify
+import argparse
+import commandHandlers
 
 def main():
     
@@ -36,16 +28,20 @@ def main():
     checkinParser.add_argument('-i', '--item_id', nargs='+', required=True, help='Evidence item ID')
     checkinParser.add_argument('-p', '--password', required=True, help='Password')
 
-    #Show cases
-    subParser.add_parser('show').add_subparsers().add_parser('cases')
+    #Show parser
+    showParser = subParser.add_parser('show')
+    showSubparser = showParser.add_subparsers(dest='show_choice', required=True)
+    
+    # Show cases
+    showSubparser.add_parser('cases', help='Show all cases')
 
     #Show items
-    showItemsParser = subParser.add_parser('show').add_subparsers().add_parser('items')
+    showItemsParser = showSubparser.add_parser('items', help='Show all items in a case')
     showItemsParser.add_argument('-c', '--case_id', required=True, help='Case ID (UUID)')
 
     #Show history
-    showHistoryParser = subParser.add_parser('show').add_subparsers().add_parser('history')
-    showHistoryParser.add_argument('-c', '--case', help='Case ID')
+    showHistoryParser = showSubparser.add_parser('history', help='Show history of a case or item')
+    showHistoryParser.add_argument('-c', '--case_id', help='Case ID')
     showHistoryParser.add_argument('-i', '--item_id', help='Evidence item ID')
     showHistoryParser.add_argument('-n', '--num_entries', type=int, help='Number of entries to show')
     showHistoryParser.add_argument('-r', '--reverse', action='store_true', help='Reverse block entries (Most Recent)')
@@ -58,21 +54,12 @@ def main():
     removeParser.add_argument('-p', '--password', required=True, help='Password')
 
     #Init
-    initParser = subParser.add_parser('init')
-
+    subParser.add_parser('init')
     #Verify
-    verifyParser = subParser.add_parser('verify')
-
+    subParser.add_parser('verify')
     #Grab Commands
     args = mainParser.parse_args()
 
-    #(TODO: Create a better implementation)
-    #Tnit blockchain (temp: change in future)
-    #Check absence of initial block or lack thereof
-    #Maybe just check below in choices
-    #blockchain = blockchain()
-
-    #Call functions
     if args.choices == 'add':
         commandHandlers.handle_add(args)
     elif args.choices == 'checkout':
@@ -80,11 +67,11 @@ def main():
     elif args.choices == 'checkin':
         commandHandlers.handle_checkin(args)
     elif args.choices == 'show':
-        if 'cases' in sys.argv:
+        if args.show_choice == 'cases':
             commandHandlers.handle_show_cases(args)
-        elif 'items' in sys.argv:
+        elif args.show_choice == 'items':
             commandHandlers.handle_show_items(args)
-        elif 'history' in sys.argv:
+        elif args.show_choice == 'history':
             commandHandlers.handle_show_history(args)
     elif args.choices == 'remove':
         commandHandlers.handle_remove(args)
