@@ -1,3 +1,4 @@
+
 # TODO: Implement blockchain class here
 
 # Required block struct below
@@ -14,6 +15,8 @@
 
 import os
 from block import Block
+import argparse
+
 
 class Blockchain:
     def __init__(self):
@@ -25,15 +28,4 @@ class Blockchain:
     # Add checks for absence of, or lack thereof, blocks here
     def load_blockchain(self):
         pass
-
-    # Add an initial block if there is none
-    def init_blockchain(self):
-        pass
-
-    # Append
-    def add_block(self, block):
-        pass
-
-    # Verify the chain
-    def verify(self):
-        pass
+    # Add a part to load up a JSON or CSV file
