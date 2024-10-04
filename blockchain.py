@@ -29,7 +29,7 @@ class Blockchain:
             blockHeader = file.read(blockHeaderSize)
 
             if not blockHeader:
-                print("Reading a file with NO BLOCK IDITO")
+                print("Reading a file with NO BLOCK IDITO") #<-- Imagine spelling it wrong LOL
                 break
 
             prev_hash, timestamp, case_id, evidence_id, state, creator, owner, D_length = struct.unpack(
@@ -46,7 +46,7 @@ class Blockchain:
             prevHash = "0",
             timestamp = 0,
             caseID = "00000000-0000-0000-0000-000000000000",
-            evidenceID = 0,
+            evidenceID = "0"*32,
             state = "INITIAL",
             creator = "",
             owner = "",

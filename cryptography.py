@@ -4,6 +4,7 @@ from Crypto.Cipher import AES
 
 AES_KEY = b"R0chLi4uLi4uLi4="
 
+
 def encrypt_UUID(uuidString):
     """
     Encrypts a valid UUID (case ID)
@@ -19,6 +20,7 @@ def encrypt_UUID(uuidString):
     encryptedUUID = cipher.encrypt(uuidBytes)
     return encryptedUUID.hex()
 
+
 def decrypt_UUID(encryptedHex):
     """
     Decrypts a valid UUID (case ID)
@@ -29,38 +31,38 @@ def decrypt_UUID(encryptedHex):
     originalUUID = uuid.UUID(bytes=originalUUIDBytes)
     return str(originalUUID)
 
+
 def encrypt_evidence_ID(evidenceID):
     """
     Encrypts evidence ID
     """
     print(f"Passed in: {evidenceID}")
-    originalEvidenceID = decrypt_evidence_ID(evidenceID)
-    print(f"Original Evidence ID: {originalEvidenceID}")
-    evidenceID = int(evidenceID)
-    evidenceIDBytes = struct.pack('>I', evidenceID)
+    evidenceID = str(evidenceID)
+
+    #I added padding because it wasnt the right length - Ken
+    evidenceID = evidenceID.ljust(16, '0') if len(evidenceID) < 16 else evidenceID[:16]
+    #This line is because if you make it into int, sometimes the number get too big
+    evidenceIDBytes = struct.pack('>I', int(evidenceID[:10]))
     paddedEvidenceID = evidenceIDBytes.ljust(16, b'\x00')
     cipher = AES.new(AES_KEY, AES.MODE_ECB)
     encryptedEvidenceID = cipher.encrypt(paddedEvidenceID)
+
+    #Moved these lines here because [Darren] was trying to decrypt NON encrypted stuff....
+    #Not FAANG of you Darren...
+    originalEvidenceID = decrypt_evidence_ID(encryptedEvidenceID.hex())
+    print(f"Original (decrypted) Evidence ID after encryption: {originalEvidenceID}")
+
     return encryptedEvidenceID.hex()
 
-    
+
 def decrypt_evidence_ID(encryptedHex):
     """
     Decrypts evidence ID
     """
-    #encryptedEvidenceIDBytes = bytes.fromhex(encryptedHex)
-    #cipher = AES.new(AES_KEY, AES.MODE_ECB)
-    #decryptedEvidenceIDPadded = cipher.decrypt(encryptedEvidenceIDBytes)
-    #decryptedEvidenceIDBytes = decryptedEvidenceIDPadded[:4]
-    #evidenceID = struct.unpack('>I', decryptedEvidenceIDBytes)[0]
-    #return evidenceID
-    try:
-        encryptedEvidenceIDBytes = bytes.fromhex(encryptedHex)
-        cipher = AES.new(AES_KEY, AES.MODE_ECB)
-        decryptedEvidenceIDPadded = cipher.decrypt(encryptedEvidenceIDBytes)
-        decryptedEvidenceID = decryptedEvidenceIDPadded.rstrip(b'\0').decode('utf-8')
-        return decryptedEvidenceID
+    encryptedEvidenceIDBytes = bytes.fromhex(encryptedHex)
+    cipher = AES.new(AES_KEY, AES.MODE_ECB)
+    decryptedEvidenceIDPadded = cipher.decrypt(encryptedEvidenceIDBytes)
+    evidenceID = struct.unpack('>I', decryptedEvidenceIDPadded[:4])[0]
 
-    except Exception as e:
-        print(f"Error during decryption of evidenceID. Exception: {e}")
-        raise e
+    return str(evidenceID)
+
