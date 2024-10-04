@@ -36,9 +36,7 @@ def encrypt_evidence_ID(evidenceID):
     """
     Encrypts evidence ID
     """
-    print(f"Passed in: {evidenceID}")
     evidenceID = str(evidenceID)
-
     #I added padding because it wasnt the right length - Ken
     evidenceID = evidenceID.ljust(16, '0') if len(evidenceID) < 16 else evidenceID[:16]
     #This line is because if you make it into int, sometimes the number get too big
@@ -46,12 +44,6 @@ def encrypt_evidence_ID(evidenceID):
     paddedEvidenceID = evidenceIDBytes.ljust(16, b'\x00')
     cipher = AES.new(AES_KEY, AES.MODE_ECB)
     encryptedEvidenceID = cipher.encrypt(paddedEvidenceID)
-
-    #Moved these lines here because [Darren] was trying to decrypt NON encrypted stuff....
-    #Not FAANG of you Darren...
-    originalEvidenceID = decrypt_evidence_ID(encryptedEvidenceID.hex())
-    print(f"Original (decrypted) Evidence ID after encryption: {originalEvidenceID}")
-
     return encryptedEvidenceID.hex()
 
 
@@ -63,6 +55,4 @@ def decrypt_evidence_ID(encryptedHex):
     cipher = AES.new(AES_KEY, AES.MODE_ECB)
     decryptedEvidenceIDPadded = cipher.decrypt(encryptedEvidenceIDBytes)
     evidenceID = struct.unpack('>I', decryptedEvidenceIDPadded[:4])[0]
-
     return str(evidenceID)
-
