@@ -19,20 +19,17 @@ class Blockchain:
                     print("Blockchain file is empty. Creating INITIAL block.")
                     self.create_initial_block()
                 else:
-                    print("Loading blockchain data...")
                     self.read_blocks(file)
 
     def read_blocks(self, file):
         blockHeaderSize = struct.calcsize("32s d 32s 32s 12s 12s 12s I")
-
         while True:
             blockHeader = file.read(blockHeaderSize)
 
             if not blockHeader:
-                print("Reading a file with NO BLOCK IDITO") #<-- Imagine spelling it wrong LOL
                 break
 
-            prev_hash, timestamp, case_id, evidence_id, state, creator, owner, D_length = struct.unpack(
+            _, _, _, _, _, _, _, D_length = struct.unpack(
                 "32s d 32s 32s 12s 12s 12s I", blockHeader
             )
 
@@ -43,7 +40,7 @@ class Blockchain:
 
     def create_initial_block(self):
         initialBlock = Block(
-            prevHash = "0",
+            prevHash = b"\0"*32, # We should store the previous as hashes (see block constructor comment)
             timestamp = 0,
             caseID = "00000000-0000-0000-0000-000000000000",
             evidenceID = "0"*32,
