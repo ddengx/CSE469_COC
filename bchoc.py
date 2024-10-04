@@ -14,18 +14,18 @@ def main():
     #Adding
     addParser = subParser.add_parser('add')
     addParser.add_argument('-c', '--case_id', required=True, help='Case ID (UUID)')
-    addParser.add_argument('-i', '--item_id', nargs='+', required=True, help='Evidence item ID')
+    addParser.add_argument('-i', '--item_id', action='append', required=True, help='Evidence item ID')
     addParser.add_argument('-g', '--creator', required=True, help='Creator')
     addParser.add_argument('-p', '--password', required=True, help='Password')
 
     #Checkout
     checkoutParser = subParser.add_parser('checkout')
-    checkoutParser.add_argument('-i', '--item_id', nargs='+', required=True, help='Evidence item ID')
+    checkoutParser.add_argument('-i', '--item_id', action='append', required=True, help='Evidence item ID')
     checkoutParser.add_argument('-p', '--password', required=True, help='Password')
 
     #Checkin
     checkinParser = subParser.add_parser('checkin')
-    checkinParser.add_argument('-i', '--item_id', nargs='+', required=True, help='Evidence item ID')
+    checkinParser.add_argument('-i', '--item_id', action='append', required=True, help='Evidence item ID')
     checkinParser.add_argument('-p', '--password', required=True, help='Password')
 
     #Show parser
@@ -68,7 +68,7 @@ def main():
         commandHandlers.handle_checkin(args)
     elif args.choices == 'show':
         if args.show_choice == 'cases':
-            commandHandlers.handle_show_cases(args)
+            commandHandlers.handle_show_cases()
         elif args.show_choice == 'items':
             commandHandlers.handle_show_items(args)
         elif args.show_choice == 'history':
@@ -76,7 +76,7 @@ def main():
     elif args.choices == 'remove':
         commandHandlers.handle_remove(args)
     elif args.choices == 'init':
-        commandHandlers.handle_init(args)
+        commandHandlers.handle_init()
     elif args.choices == 'verify':
         commandHandlers.handle_verify(args)
 
