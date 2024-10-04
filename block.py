@@ -18,7 +18,11 @@ class Block:
         :param owner: Free form text with max 16 chars (Must be one of Police, Lawyer, Analyst, Executive)
         :param data: Free form text with byte length specified in data length
         """
-        self.prevHash = prevHash.encode('utf-8')[:32].ljust(32, b'\0')
+        # Changed the logic of storing previous hashes
+        # We need to store previous hash as bytes to fit into the 32 byte length (prevHash passed in here should be bytes nothing else)
+        # We'll then convert these bytes to the SHA-256 hash when needed - Deng
+        self.prevHash = bytes.fromhex(prevHash) if isinstance(prevHash, str) else prevHash
+        self.prevHash = self.prevHash[:32].ljust(32, b'\0')
         self.timestamp = timestamp
         self.caseID = encrypt_UUID(caseID) # 32 byte hex string
         self.evidenceID = encrypt_evidence_ID(evidenceID) # 32 byte hex string
@@ -47,18 +51,6 @@ class Block:
             self.D_length
         )
         return packedBin + self.data
-    
-    def get_case_id(self):
-        """
-        Return decrypted case ID
-        """
-        return decrypt_UUID(self.caseID)
-
-    def get_evidence_id(self):
-        """
-        Return decrypted evidence ID
-        """
-        return decrypt_evidence_ID(self.evidenceID)
 
     @classmethod
     def from_binary(cls, binData):
@@ -73,16 +65,20 @@ class Block:
         )
 
         dataField = binData[blockHeaderSize:blockHeaderSize + D_length]
+
+        # Strip any 0's and decrypt case ID
         caseID = caseID.rstrip(b'\0')
-        caseIDHex = caseID.hex()
+        decryptedCaseID = decrypt_UUID(caseID.hex())
+
+        # Strip any 0's and decrypt evidence ID
         evidenceID = evidenceID.rstrip(b'\0')
-        evidenceIDHex = evidenceID.hex()
+        decryptedEvidenceID = decrypt_evidence_ID(evidenceID.hex())
 
         return cls(
-            prevHash = prevHash.decode('utf-8').rstrip('\0'),
+            prevHash = prevHash, # Kept as bytes
             timestamp = timestamp,
-            caseID = caseIDHex,
-            evidenceID = evidenceIDHex,
+            caseID = decryptedCaseID,
+            evidenceID = decryptedEvidenceID,
             state = state.decode('utf-8').rstrip('\0'),
             creator = creator.decode('utf-8').rstrip('\0'),
             owner = owner.decode('utf-8').rstrip('\0'),
@@ -92,5 +88,54 @@ class Block:
     def hash_block(self):
         """
         Create a SHA-256 hash of a block (its binary representation)
+        Returns the SHA-256 hash as bytes
         """
-        return hashlib.sha256(self.to_binary()).hexdigest()
+        return hashlib.sha256(self.to_binary()).digest()
+    
+    def get_prev_hash(self):
+        """
+        Return the SHA-256 hash of the previous block
+        """
+        return self.prevHash.hex()
+    
+    def get_timestamp(self):
+        """
+        Return timestamp
+        """
+        return self.timestamp    
+    
+    def get_case_id(self):
+        """
+        Return decrypted case ID
+        """
+        return decrypt_UUID(self.caseID)
+
+    def get_evidence_id(self):
+        """
+        Return decrypted evidence ID
+        """
+        return decrypt_evidence_ID(self.evidenceID)
+    
+    def get_state(self):
+        """
+        Return decoded state
+        """
+        return self.state.decode()
+    
+    def get_creator(self):
+        """
+        Return decoded creator
+        """
+        return self.creator.decode()
+    
+    def get_owner(self):
+        """
+        Return decoded owner
+        """
+        return self.owner.decode()
+    
+    def get_data(self):
+        """
+        Return decoded data
+        """
+        return self.data.decode()
