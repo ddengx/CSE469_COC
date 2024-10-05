@@ -3,9 +3,17 @@
 # Calls the wrapper interface commandHandlers.py
 
 import argparse
+import os
 import commandHandlers
 
 def main():
+    # Hardcoded environmental variables for local testing
+    os.environ['AES_KEY'] = 'R0chLi4uLi4uLi4='
+    os.environ['BCHOC_PASSWORD_POLICE'] = 'P80P'
+    os.environ['BCHOC_PASSWORD_LAWYER'] = 'L76L'
+    os.environ['BCHOC_PASSWORD_ANALYST'] = 'A65A'
+    os.environ['BCHOC_PASSWORD_EXECUTIVE'] = 'E69E'
+    os.environ['BCHOC_PASSWORD_CREATOR'] = 'C67C'
     
     #Setup parsers
     mainParser = argparse.ArgumentParser(description='CSE469 Chain of Custody')
@@ -20,12 +28,12 @@ def main():
 
     #Checkout
     checkoutParser = subParser.add_parser('checkout')
-    checkoutParser.add_argument('-i', '--item_id', action='append', required=True, help='Evidence item ID')
+    checkoutParser.add_argument('-i', '--item_id', required=True, help='Evidence item ID')
     checkoutParser.add_argument('-p', '--password', required=True, help='Password')
 
     #Checkin
     checkinParser = subParser.add_parser('checkin')
-    checkinParser.add_argument('-i', '--item_id', action='append', required=True, help='Evidence item ID')
+    checkinParser.add_argument('-i', '--item_id', required=True, help='Evidence item ID')
     checkinParser.add_argument('-p', '--password', required=True, help='Password')
 
     #Show parser
