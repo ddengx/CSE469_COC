@@ -35,7 +35,7 @@ def handle_add(args):
 
             # If the evidence ID is not unique, skip adding
             if str(parsedEvidenceID) in existingEvidenceIDs:
-                print(f"Case '{args.case_id}' was not added.")
+                print(f"Evidence ID '{parsedEvidenceID}' was not added.")
                 print('Evidence IDs must be unique')
                 continue
             
