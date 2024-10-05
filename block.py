@@ -120,19 +120,19 @@ class Block:
         """
         Return decoded state
         """
-        return self.state.decode()
+        return self.state.decode().strip('\0')
     
     def get_creator(self):
         """
         Return decoded creator
         """
-        return self.creator.decode()
+        return self.creator.decode().strip('\0')
     
     def get_owner(self):
         """
         Return decoded owner
         """
-        return self.owner.decode()
+        return self.owner.decode().strip('\0')
     
     def get_data(self):
         """
