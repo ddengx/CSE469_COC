@@ -1,8 +1,11 @@
 import os
+
+from volatility3.framework.layers.resources import HAS_MAGIC
+
 from block import Block
 from blockchain import Blockchain
 import maya
-
+import sys
 def handle_init():
     Blockchain()
 
@@ -234,7 +237,41 @@ def handle_remove(args):
     pass
 
 def handle_verify(args):
-    # ADd
+    blockchain = Blockchain()
+    transactionCount = len(blockchain.chain)
+    print(f">Transactions in blockchain: {transactionCount}")
+
+
+    # IMPORTANT: For testing purposes, you can assume that a blockchain will only have one error in it.
+    # If this weren’t the case, it would matter which direction you traverse the chain while validating,
+    # and I don’t want you to have to worry about that.
+    # In cases of errors (invalid operations), exit with error code 1.
+
+    #Verify Error Cases
+    #Im not sure what we should be returning as the "bad block"
+    #For now, im just gonna use the case id
+
+    hashHistory = {}
+    for index,block in enumerate(blockchain.chain):
+
+        if block.prevHash not in hashHistory and index != 0:
+            print(">State of blockchain: ERROR")
+            print(f">Bad block:\n{block.caseID}\n>Parent block: NOT FOUND")
+            sys.exit(1)
+        elif block.prevHash in hashHistory:
+            print(">State of blockchain: ERROR")
+            print(f">Bad block:\n{block.caseID}\n>Parent block:\n{hashHistory[block.caseID]}\n>Two blocks were found with the same parent.")
+            sys.exit(1)
+
+        #Add another case for Block contents do not match block checksum.
+
+
+        #Add another case for Item checked out or checked in after removal from chain.
+
+    print(">State of blockchain: CLEAN")
+
+
+
     pass
 
 def verify_password(passwordArg):
