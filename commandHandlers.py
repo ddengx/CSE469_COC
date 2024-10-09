@@ -87,11 +87,6 @@ def handle_checkout(args):
         if checkoutBlock == None:
             print(f"Item ID {args.item_id} does not exist")
             return
-        
-        # Must be checked oin to check out
-        if checkoutBlock.get_state() != 'CHECKEDIN':
-            print(f"Only checked in items can be checked out")
-            return
 
         # Must be one of the owners
         # Need clarification on the requirements
@@ -144,11 +139,6 @@ def handle_checkin(args):
         # Return if the item id does not exist
         if checkinBlock == None:
             print(f"Item ID {args.item_id} does not exist")
-            return
-        
-        # Must be checked out to check in
-        if checkinBlock.get_state() != 'CHECKEDOUT':
-            print(f"Only checked out items can be checked in")
             return
 
         # Must be one of the owners
@@ -229,11 +219,53 @@ def handle_show_items(args):
         print(f"Item ID {index}: {itemID}")
 
 def handle_show_history(args):
-    # ADd
-    pass
+    """
+    Display the blockchain entries for the requested item giving the oldest first
+    Optional arguments to filter: Case ID, Item ID, reverse flag
+    Password is optional: Display as hex if password is invalid or there is none
+    """
+    blockchain = Blockchain()
+
+    # Get all blocks excluding the initial block
+    filteredBlocks = blockchain.chain[1:]
+    
+    # Filter by case id if provided
+    if args.case_id:
+        filteredBlocks = [
+                block for block in filteredBlocks if block.get_case_id() == args.case_id
+            ]
+    
+    # Filter by item id
+    if args.item_id:
+        filteredBlocks = [
+                block for block in filteredBlocks if block.get_evidence_id() == args.item_id
+            ]
+    
+    # Reverse the list if given a flag
+    if args.reverse:
+        filteredBlocks = filteredBlocks[::-1]
+
+    # Cap by num entries
+    if args.num_entries:
+        filteredBlocks = filteredBlocks[:args.num_entries]
+
+    # Display
+    for block in filteredBlocks:
+        # Display case id and item id as hex if no password is provided
+        caseID = block.caseID
+        evidenceID = block.evidenceID
+        if args.password:
+            if verify_password(args.password)[1]:
+                caseID = block.get_case_id()
+                evidenceID = block.get_evidence_id()
+
+        print(f"Case: {caseID}")
+        print(f"Item: {evidenceID}")
+        print(f"Action: {block.get_state()}")
+        print(f"Time: {maya.MayaDT(block.get_timestamp()).iso8601()}")
+        print()
 
 def handle_remove(args):
-    # Add
     pass
 
 def handle_verify(args):
