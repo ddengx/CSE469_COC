@@ -53,7 +53,7 @@ def main():
     showHistoryParser.add_argument('-i', '--item_id', help='Evidence item ID')
     showHistoryParser.add_argument('-n', '--num_entries', type=int, help='Number of entries to show')
     showHistoryParser.add_argument('-r', '--reverse', action='store_true', help='Reverse block entries (Most Recent)')
-    showHistoryParser.add_argument('-p', '--password', required=True, help='Password')
+    showHistoryParser.add_argument('-p', '--password', help='Password')
 
     #Remove
     removeParser = subParser.add_parser('remove')
