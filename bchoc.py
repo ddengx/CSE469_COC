@@ -60,7 +60,8 @@ def main():
     removeParser.add_argument('-i', '--item_id', required=True, help='Evidence item ID')
     removeParser.add_argument('-y', '--reason', required=True, help='Reason for removal')
     removeParser.add_argument('-p', '--password', required=True, help='Password')
-
+    removeParser.add_argument('-o', '--owner', help='Lawful owner to release evidence to')
+    
     #Init
     subParser.add_parser('init')
     #Verify
