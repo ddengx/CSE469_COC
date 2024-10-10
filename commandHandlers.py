@@ -11,164 +11,160 @@ def handle_add(args):
     """
     Handle the 'add' command to add a block to the blockchain.
     """
-    if verify_password(args.password)[1]:
-        blockchain = Blockchain()
-        role = verify_password(args.password)[0]
-
-        if len(blockchain.chain) == 0:
-            print("Blockchain empty, please initialize first.")
-            return
-
-        timestampFloat = maya.now().epoch
-        timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
-
-        # Get the hash of the initial block
-        prevBlockHash = blockchain.chain[-1].hash_block()
-
-        # SETS AGAIN LFGGGGG
-        existingEvidenceIDs = set(block.get_evidence_id() for block in blockchain.chain)
-
-        # Loop thru and add block for each evidence id
-        # Could probably add a new base case in this function to not even 
-        # enter this loop if there is only 1 evidence id in the list
-        for evidenceID in args.item_id:
-            parsedEvidenceID = int(evidenceID)
-
-            # If the evidence ID is not unique, skip adding
-            if str(parsedEvidenceID) in existingEvidenceIDs:
-                print(f"Evidence ID '{parsedEvidenceID}' was not added.")
-                print('Evidence IDs must be unique')
-                continue
-            
-            newBlock = Block(
-                prevHash = prevBlockHash,
-                timestamp = timestampFloat,
-                caseID = args.case_id,
-                evidenceID = parsedEvidenceID,
-                state = "CHECKEDIN",
-                creator = args.creator,
-                owner = role,
-                data = f"Added item {parsedEvidenceID}"
-            )
-
-            blockchain.append_chain(newBlock)
-            
-            print(f"> Added item: {newBlock.get_evidence_id()}")
-            print(f"> Status: {newBlock.get_state()}")
-            print(f"> Time of action: {timestampDisplay}")
-            print()
-
-            # Update prevBlockHash for the next block
-            prevBlockHash = newBlock.hash_block()
-    else:
+    if not verify_password(args.password)[1]:
         print('Invalid password')
         return
+
+    blockchain = Blockchain()
+    role = verify_password(args.password)[0]
+
+    if len(blockchain.chain) == 0:
+        print("Blockchain empty, please initialize first.")
+        return
+
+    timestampFloat = maya.now().epoch
+    timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
+
+    # Get the hash of the initial block
+    prevBlockHash = blockchain.chain[-1].hash_block()
+
+    # SETS AGAIN LFGGGGG
+    existingEvidenceIDs = set(block.get_evidence_id() for block in blockchain.chain)
+
+    # Loop thru and add block for each evidence id
+    # Could probably add a new base case in this function to not even 
+    # enter this loop if there is only 1 evidence id in the list
+    for evidenceID in args.item_id:
+        parsedEvidenceID = int(evidenceID)
+
+        # If the evidence ID is not unique, skip adding
+        if str(parsedEvidenceID) in existingEvidenceIDs:
+            print(f"Evidence ID '{parsedEvidenceID}' was not added.")
+            print('Evidence IDs must be unique')
+            continue
+        
+        newBlock = Block(
+            prevHash = prevBlockHash,
+            timestamp = timestampFloat,
+            caseID = args.case_id,
+            evidenceID = parsedEvidenceID,
+            state = "CHECKEDIN",
+            creator = args.creator,
+            owner = role,
+            data = f"Added item {parsedEvidenceID}"
+        )
+
+        blockchain.append_chain(newBlock)
+        
+        print(f"> Added item: {newBlock.get_evidence_id()}")
+        print(f"> Status: {newBlock.get_state()}")
+        print(f"> Time of action: {timestampDisplay}")
+        print()
+
+        # Update prevBlockHash for the next block
+        prevBlockHash = newBlock.hash_block()
 
 def handle_checkout(args):
     """
     Checks out a checked in case
     """
-    isValid = verify_password(args.password)[1] # Bool
-    if isValid:
-        role = verify_password(args.password)[0] # Role of the password
-        blockchain = Blockchain()
-        checkoutBlock = None
-        timestampFloat = maya.now().epoch
-        timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
-
-        # loop to find matching blocks
-        for block in blockchain.chain:
-            if args.item_id == block.get_evidence_id():
-                checkoutBlock = block
-        
-        # Return if the item id does not exist
-        if checkoutBlock == None:
-            print(f"Item ID {args.item_id} does not exist")
-            return
-
-        # Must be one of the owners
-        # Need clarification on the requirements
-        # May need to edit this to roles of all instances of the item id
-        if checkoutBlock.get_owner() != str(role):
-            print(f"Only valid owners of this case can checkout")
-            return
-        
-        # Nab hash of the previous block
-        prevBlockHash = blockchain.chain[-1].hash_block()
-
-        newBlock = Block(
-            prevHash = prevBlockHash,
-            timestamp = timestampFloat,
-            caseID = checkoutBlock.get_case_id(),
-            evidenceID = checkoutBlock.get_evidence_id(),
-            state = "CHECKEDOUT",
-            creator = checkoutBlock.get_creator(),
-            owner = role,
-            data = f"Checked out item {checkoutBlock.get_evidence_id()}"
-        )
-
-        blockchain.append_chain(newBlock)
-
-        print(f"> Case: {newBlock.get_case_id()}")
-        print(f"> Checked out item: {newBlock.get_evidence_id()}")
-        print(f"> Status: {newBlock.get_state()}")
-        print(f"> Time of action: {timestampDisplay}")
-    else:
+    if not verify_password(args.password)[1]:
         print('Invalid password')
         return
+
+    role = verify_password(args.password)[0] # Role of the password
+    blockchain = Blockchain()
+    checkoutBlock = None
+    timestampFloat = maya.now().epoch
+    timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
+
+    # loop to find matching blocks
+    for block in blockchain.chain:
+        if args.item_id == block.get_evidence_id():
+            checkoutBlock = block
+    
+    # Return if the item id does not exist
+    if checkoutBlock == None:
+        print(f"Item ID {args.item_id} does not exist")
+        return
+
+    # Evidence items that are either disposed, destroyed, or released cannot be checkedout
+    reasons = ['DISPOSED', 'DESTROYED', 'RELEASED']
+    if checkoutBlock.get_state() in reasons:
+        print(f"The requested block is {checkoutBlock.get_state()}. Further action is forbidden")
+        return
+    
+    # Nab hash of the previous block
+    prevBlockHash = blockchain.chain[-1].hash_block()
+
+    newBlock = Block(
+        prevHash = prevBlockHash,
+        timestamp = timestampFloat,
+        caseID = checkoutBlock.get_case_id(),
+        evidenceID = checkoutBlock.get_evidence_id(),
+        state = "CHECKEDOUT",
+        creator = checkoutBlock.get_creator(),
+        owner = role,
+        data = f"Checked out item {checkoutBlock.get_evidence_id()}"
+    )
+
+    blockchain.append_chain(newBlock)
+
+    print(f"> Case: {newBlock.get_case_id()}")
+    print(f"> Checked out item: {newBlock.get_evidence_id()}")
+    print(f"> Status: {newBlock.get_state()}")
+    print(f"> Time of action: {timestampDisplay}")
 
 def handle_checkin(args):
     """
     Checks in a checked out case
     """
-    isValid = verify_password(args.password)[1] # Bool
-    if isValid:
-        role = verify_password(args.password)[0] # Role of the password
-        blockchain = Blockchain()
-        checkinBlock = None
-        timestampFloat = maya.now().epoch
-        timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
-
-        # loop to find matching blocks
-        for block in blockchain.chain:
-            if args.item_id == block.get_evidence_id():
-                checkinBlock = block
-        
-        # Return if the item id does not exist
-        if checkinBlock == None:
-            print(f"Item ID {args.item_id} does not exist")
-            return
-
-        # Must be one of the owners
-        # Need clarification on the requirements
-        # May need to edit this to roles of all instances of the item id
-        if checkinBlock.get_owner() != str(role):
-            print(f"Only valid owners of this case can checkout")
-            return
-        
-        # Nab hash of the previous block
-        prevBlockHash = blockchain.chain[-1].hash_block()
-
-        newBlock = Block(
-            prevHash = prevBlockHash,
-            timestamp = timestampFloat,
-            caseID = checkinBlock.get_case_id(),
-            evidenceID = checkinBlock.get_evidence_id(),
-            state = "CHECKEDIN",
-            creator = checkinBlock.get_creator(),
-            owner = role,
-            data = f"Checked out item {checkinBlock.get_evidence_id()}"
-        )
-
-        blockchain.append_chain(newBlock)
-
-        print(f"> Case: {newBlock.get_case_id()}")
-        print(f"> Checked in item: {newBlock.get_evidence_id()}")
-        print(f"> Status: {newBlock.get_state()}")
-        print(f"> Time of action: {timestampDisplay}")
-    else:
-        print('Invalid password')
+    if not verify_password(args.password)[1]:
+        print("Invalid password")
         return
+
+    role = verify_password(args.password)[0] # Role of the password
+    blockchain = Blockchain()
+    checkinBlock = None
+    timestampFloat = maya.now().epoch
+    timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
+
+    # loop to find matching blocks
+    for block in blockchain.chain:
+        if args.item_id == block.get_evidence_id():
+            checkinBlock = block
+    
+    # Return if the item id does not exist
+    if checkinBlock == None:
+        print(f"Item ID {args.item_id} does not exist")
+        return
+    
+    # Evidence items that are either disposed, destroyed, or released cannot be checkedout
+    reasons = ['DISPOSED', 'DESTROYED', 'RELEASED']
+    if checkinBlock.get_state() in reasons:
+        print(f"The requested block is {checkinBlock.get_state()}. Further action is forbidden")
+        return
+    
+    # Nab hash of the previous block
+    prevBlockHash = blockchain.chain[-1].hash_block()
+
+    newBlock = Block(
+        prevHash = prevBlockHash,
+        timestamp = timestampFloat,
+        caseID = checkinBlock.get_case_id(),
+        evidenceID = checkinBlock.get_evidence_id(),
+        state = "CHECKEDIN",
+        creator = checkinBlock.get_creator(),
+        owner = role,
+        data = f"Checked out item {checkinBlock.get_evidence_id()}"
+    )
+
+    blockchain.append_chain(newBlock)
+
+    print(f"> Case: {newBlock.get_case_id()}")
+    print(f"> Checked in item: {newBlock.get_evidence_id()}")
+    print(f"> Status: {newBlock.get_state()}")
+    print(f"> Time of action: {timestampDisplay}")
 
 # Not sure of the exact output Baek wants
 # Showing only case IDs for now
@@ -264,7 +260,67 @@ def handle_show_history(args):
         print()
 
 def handle_remove(args):
-    pass
+    """
+    "Removes" an item from the chain (prevents further action to the block)
+    Adds the removed block to the chain
+    If the reason of removal is RELEASED, -o (lawful owner information) must be given
+    """
+    if not verify_password(args.password)[1]:
+        print("Invalid password")
+        return
+    
+    blockchain = Blockchain()
+    blockToRemove = None
+
+    # Must be one of DISPOSED, DESTROYED, or RELEASED
+    reasons = ['DISPOSED', 'DESTROYED', 'RELEASED']
+    if args.reason not in reasons:
+        print(f"Invalid reason. Must be one of: {', '.join(reasons)}")
+        return
+    
+    # Check if owner is given if the reason is RELEASED
+    if args.reason == 'RELEASED':
+        if not args.owner:
+            print("Information about the lawful owner must be given to release an evidence item")
+            return
+
+    # Find the first instance of a matching block, break
+    for block in reversed(blockchain.chain):
+        if block.get_evidence_id() == args.item_id:
+            blockToRemove = block
+            break
+
+    # If a block with the desired item id does not exist
+    if not blockToRemove:
+        print(f"Item ID {args.item_id} does not exist")
+        return
+    
+    # If the block is not checked in, it cannot be removed
+    if blockToRemove.get_state() != 'CHECKEDIN':
+        print(f"Only checkedin items can be removed")
+        return
+    
+    timestampFloat = maya.now().epoch
+    timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
+    prevBlockHash = blockchain.chain[-1].hash_block()
+
+    newBlock = Block(
+        prevHash = prevBlockHash,
+        timestamp = timestampFloat,
+        caseID = blockToRemove.get_case_id(),
+        evidenceID = args.item_id,
+        state = args.reason,
+        creator = blockToRemove.get_creator(),
+        owner = args.owner,
+        data = f"Removed item {args.item_id}. Reason: {args.reason}"
+    )
+
+    blockchain.append_chain(newBlock)
+
+    print(f"Case: {newBlock.get_case_id()}")
+    print(f"Removed item: {newBlock.get_evidence_id()}")
+    print(f"Status: {newBlock.get_state()}")
+    print(f"Time of action: {maya.MayaDT(block.get_timestamp()).iso8601()}")
 
 def handle_verify(args):
     blockchain = Blockchain()
