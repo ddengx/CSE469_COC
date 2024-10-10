@@ -1,7 +1,5 @@
 import os
 
-from volatility3.framework.layers.resources import HAS_MAGIC
-
 from block import Block
 from blockchain import Blockchain
 import maya
