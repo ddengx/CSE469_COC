@@ -1,9 +1,10 @@
 import os
-
 from block import Block
 from blockchain import Blockchain
 import maya
 import sys
+import hashlib
+
 def handle_init():
     Blockchain()
 
@@ -337,23 +338,29 @@ def handle_verify(args):
     #Im not sure what we should be returning as the "bad block"
     #For now, im just gonna use the case id
 
-    hashHistory = {}
+    hashHistory = []
     for index,block in enumerate(blockchain.chain):
 
+        currentHash = hashlib.sha256(block.caseID).hexdigest()
         if block.prevHash not in hashHistory and index != 0:
             print(">State of blockchain: ERROR")
-            print(f">Bad block:\n{block.caseID}\n>Parent block: NOT FOUND")
+            print(f">Bad block:\n{currentHash}\n>Parent block: NOT FOUND")
             sys.exit(1)
         elif block.prevHash in hashHistory:
             print(">State of blockchain: ERROR")
-            print(f">Bad block:\n{block.caseID}\n>Parent block:\n{hashHistory[block.caseID]}\n>Two blocks were found with the same parent.")
+            print(f">Bad block:\n{currentHash}\n>Parent block:\n{hashlib.sha256(hashHistory[block.caseID]).hexdigest()}\n>Two blocks were found with the same parent.")
             sys.exit(1)
 
         #Add another case for Block contents do not match block checksum.
 
 
         #Add another case for Item checked out or checked in after removal from chain.
-
+        elif index != 0 and hashlib.sha256(hashHistory[-1]).hexdigest() != block.prevHash:
+            print(">State of blockchain: ERROR")
+            print(f">Bad block:\n{currentHash}")
+            print(f"> Item checked out or checked in after removal from chain.")
+        #Add into traverse History
+        hashHistory.append(block.caseID)
     print(">State of blockchain: CLEAN")
 
 
