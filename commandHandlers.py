@@ -89,11 +89,11 @@ def handle_checkout(args):
         print(f"Item ID {args.item_id} does not exist")
         return
 
-    # Evidence items that are either disposed, destroyed, or released cannot be checkedout
-    reasons = ['DISPOSED', 'DESTROYED', 'RELEASED']
-    if checkoutBlock.get_state() in reasons:
-        print(f"The requested block is {checkoutBlock.get_state()}. Further action is forbidden")
-        return
+    # # Evidence items that are either disposed, destroyed, or released cannot be checkedout
+    # reasons = ['DISPOSED', 'DESTROYED', 'RELEASED']
+    # if checkoutBlock.get_state() in reasons:
+    #     print(f"The requested block is {checkoutBlock.get_state()}. Further action is forbidden")
+    #     return
     
     # Nab hash of the previous block
     prevBlockHash = blockchain.chain[-1].hash_block()
@@ -140,11 +140,11 @@ def handle_checkin(args):
         print(f"Item ID {args.item_id} does not exist")
         return
     
-    # Evidence items that are either disposed, destroyed, or released cannot be checkedout
-    reasons = ['DISPOSED', 'DESTROYED', 'RELEASED']
-    if checkinBlock.get_state() in reasons:
-        print(f"The requested block is {checkinBlock.get_state()}. Further action is forbidden")
-        return
+    # # Evidence items that are either disposed, destroyed, or released cannot be checkedout
+    # reasons = ['DISPOSED', 'DESTROYED', 'RELEASED']
+    # if checkinBlock.get_state() in reasons:
+    #     print(f"The requested block is {checkinBlock.get_state()}. Further action is forbidden")
+    #     return
     
     # Nab hash of the previous block
     prevBlockHash = blockchain.chain[-1].hash_block()
@@ -312,7 +312,7 @@ def handle_remove(args):
         evidenceID = args.item_id,
         state = args.reason,
         creator = blockToRemove.get_creator(),
-        owner = args.owner,
+        owner = args.owner if args.owner else "",
         data = f"Removed item {args.item_id}. Reason: {args.reason}"
     )
 
@@ -323,49 +323,82 @@ def handle_remove(args):
     print(f"Status: {newBlock.get_state()}")
     print(f"Time of action: {maya.MayaDT(block.get_timestamp()).iso8601()}")
 
-def handle_verify(args):
+def handle_verify():
     blockchain = Blockchain()
     transactionCount = len(blockchain.chain)
     print(f">Transactions in blockchain: {transactionCount}")
 
+    initialBlockPrevHash = "0" * 64 # Initial block will always have this previous hash
+    prevHash = None # Declare prevHash to keep track of the previous hash
+    seenHashes = set() # Use this to keep track of seen hash values (should be unique = set)
+    removedItems = set() # Use this to keep track of items which were removed (no action can happen)
+    itemStates = {} # Key value pairs of 'itemId: state'. Use this to keep track of state transitions
+    validTransitions = {
+        "INITIAL": ["CHECKEDIN"],
+        "CHECKEDIN": ["CHECKEDOUT", "DISPOSED", "DESTROYED", "RELEASED"],
+        "CHECKEDOUT": ["CHECKEDIN"]
+    }
 
-    # IMPORTANT: For testing purposes, you can assume that a blockchain will only have one error in it.
-    # If this weren’t the case, it would matter which direction you traverse the chain while validating,
-    # and I don’t want you to have to worry about that.
-    # In cases of errors (invalid operations), exit with error code 1.
+    for index, block in enumerate(blockchain.chain):
+        currentHash = block.hash_block().hex() # Always print in hex for verification
 
-    #Verify Error Cases
-    #Im not sure what we should be returning as the "bad block"
-    #For now, im just gonna use the case id
+        # We have to handle the case where the initial block is empty as well
+        if index == 0:
+            if block.get_state() != "INITIAL" or block.get_prev_hash() != initialBlockPrevHash:
+                print("State of blockchain: ERROR")
+                print(f"Bad block: {currentHash}")
+                print("Invalid initial block")
+                sys.exit(1)
+        else:
+            # Check the previous hash here
+            # If is in seenHashes... then a parent has multiple children
+            if block.get_prev_hash() != prevHash:
+                print("State of blockchain: ERROR")
+                print(f"Bad block: {currentHash}")
+                if block.get_prev_hash() not in seenHashes:
+                    print("Parent block: NOT FOUND")
+                else:
+                    print("Two blocks were found with the same parent")
+                sys.exit(1)
 
-    hashHistory = []
-    for index,block in enumerate(blockchain.chain):
+            # Check block checksum
+            if block.hash_block() != hashlib.sha256(block.to_binary()).digest():
+                print("State of blockchain: ERROR")
+                print(f"Bad block: {currentHash}")
+                print("Block contents do not match block checksum")
+                sys.exit(1)
 
-        currentHash = hashlib.sha256(block.caseID).hexdigest()
-        if block.prevHash not in hashHistory and index != 0:
-            print(">State of blockchain: ERROR")
-            print(f">Bad block:\n{currentHash}\n>Parent block: NOT FOUND")
-            sys.exit(1)
-        elif block.prevHash in hashHistory:
-            print(">State of blockchain: ERROR")
-            print(f">Bad block:\n{currentHash}\n>Parent block:\n{hashlib.sha256(hashHistory[block.caseID]).hexdigest()}\n>Two blocks were found with the same parent.")
-            sys.exit(1)
+            itemID = block.get_evidence_id()
+            currentState = block.get_state()
 
-        #Add another case for Block contents do not match block checksum.
+            # Check in and check out post removal validations
+            if itemID in removedItems:
+                print("State of blockchain: ERROR")
+                print(f"Bad block: {currentHash}")
+                print("Item checked out or checked in after removal from chain")
+                sys.exit(1)
 
+            # Validate state transitions
+            if itemID in itemStates:
+                prevState = itemStates[itemID]
+                if currentState not in validTransitions.get(prevState, []):
+                    print("State of blockchain: ERROR")
+                    print(f"Bad block: {currentHash}")
+                    print(f"Invalid state transition: {prevState} to {currentState}")
+                    sys.exit(1)
 
-        #Add another case for Item checked out or checked in after removal from chain.
-        elif index != 0 and hashlib.sha256(hashHistory[-1]).hexdigest() != block.prevHash:
-            print(">State of blockchain: ERROR")
-            print(f">Bad block:\n{currentHash}")
-            print(f"> Item checked out or checked in after removal from chain.")
-        #Add into traverse History
-        hashHistory.append(block.caseID)
-    print(">State of blockchain: CLEAN")
+            # Update itemStates
+            itemStates[itemID] = currentState
 
-
-
-    pass
+            # Update removedItems
+            if currentState in ["DISPOSED", "DESTROYED", "RELEASED"]:
+                removedItems.add(itemID)
+        
+        # Update prevHash and seenHashes with currenHash
+        prevHash = currentHash
+        seenHashes.add(currentHash)
+    
+    print("State of blockchain: CLEAN")
 
 def verify_password(passwordArg):
     """
