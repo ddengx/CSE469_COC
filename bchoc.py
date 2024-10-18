@@ -87,7 +87,7 @@ def main():
     elif args.choices == 'init':
         commandHandlers.handle_init()
     elif args.choices == 'verify':
-        commandHandlers.handle_verify(args)
+        commandHandlers.handle_verify()
 
 if __name__ == "__main__":
     main()
