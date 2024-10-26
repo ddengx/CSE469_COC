@@ -13,7 +13,8 @@ def handle_add(args):
     Handle the 'add' command to add a block to the blockchain.
     """
     if not verify_password(args.password)[1]:
-        print('Invalid password')
+        print('> Invalid password')
+        sys.exit(1)
         return
 
     blockchain = Blockchain()
@@ -267,8 +268,9 @@ def handle_remove(args):
     If the reason of removal is RELEASED, -o (lawful owner information) must be given
     """
     if not verify_password(args.password)[1]:
-        print("Invalid password")
-        return
+        print("> Invalid password")
+        sys.exit(1)
+
     
     blockchain = Blockchain()
     blockToRemove = None
