@@ -1,7 +1,8 @@
+#!/usr/bin/env python3
+
 # Completed main script file
 # Parses command line commands
 # Calls the wrapper interface commandHandlers.py
-
 import argparse
 import os
 import commandHandlers
