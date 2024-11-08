@@ -18,6 +18,8 @@ def encrypt_UUID(uuidString):
     uuidBytes = uuidObj.bytes
     cipher = AES.new(AES_KEY, AES.MODE_ECB)
     encryptedUUID = cipher.encrypt(uuidBytes)
+    if len(encryptedUUID) != 16:
+        encryptedUUID = encryptedUUID[:16].ljust(16, b'\0')
     return encryptedUUID.hex()
 
 
@@ -28,7 +30,8 @@ def decrypt_UUID(encryptedHex):
     encryptedUUIDBytes = bytes.fromhex(encryptedHex)
     cipher = AES.new(AES_KEY, AES.MODE_ECB)
     originalUUIDBytes = cipher.decrypt(encryptedUUIDBytes)
-    originalUUID = uuid.UUID(bytes=originalUUIDBytes)
+    formattedUUIDBytes = originalUUIDBytes.ljust(16, b'\0')[:16]
+    originalUUID = uuid.UUID(bytes=formattedUUIDBytes)
     return str(originalUUID)
 
 

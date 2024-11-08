@@ -67,9 +67,11 @@ class Block:
         dataField = binData[blockHeaderSize:blockHeaderSize + D_length]
 
         # Strip any 0's and decrypt case ID
+        # print(f"Before Strip {caseID}")
         caseID = caseID.rstrip(b'\0')
+        # print(f"After Strip {caseID}")
+        #print("in block before decrypt")
         decryptedCaseID = decrypt_UUID(caseID.hex())
-
         # Strip any 0's and decrypt evidence ID
         evidenceID = evidenceID.rstrip(b'\0')
         decryptedEvidenceID = decrypt_evidence_ID(evidenceID.hex())
