@@ -15,7 +15,6 @@ def handle_add(args):
     if not verify_password(args.password)[1]:
         print('> Invalid password')
         sys.exit(1)
-        return
 
     blockchain = Blockchain()
     role = verify_password(args.password)[0]
@@ -43,7 +42,7 @@ def handle_add(args):
         if str(parsedEvidenceID) in existingEvidenceIDs:
             print(f"Evidence ID '{parsedEvidenceID}' was not added.")
             print('Evidence IDs must be unique')
-            continue
+            sys.exit(1)
         
         newBlock = Block(
             prevHash = prevBlockHash,
@@ -72,29 +71,30 @@ def handle_checkout(args):
     """
     if not verify_password(args.password)[1]:
         print('Invalid password')
-        return
+        sys.exit(1)
 
     role = verify_password(args.password)[0] # Role of the password
     blockchain = Blockchain()
     checkoutBlock = None
     timestampFloat = maya.now().epoch
     timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
-
+    searchID = str(args.item_id)
+    
     # loop to find matching blocks
     for block in blockchain.chain:
-        if args.item_id == block.get_evidence_id():
+        if searchID == block.get_evidence_id():
             checkoutBlock = block
     
     # Return if the item id does not exist
     if checkoutBlock == None:
         print(f"Item ID {args.item_id} does not exist")
-        return
+        sys.exit(1)
 
-    # # Evidence items that are either disposed, destroyed, or released cannot be checkedout
-    # reasons = ['DISPOSED', 'DESTROYED', 'RELEASED']
-    # if checkoutBlock.get_state() in reasons:
-    #     print(f"The requested block is {checkoutBlock.get_state()}. Further action is forbidden")
-    #     return
+    # Evidence items that are either disposed, destroyed, or released cannot be checkedout
+    reasons = ['DISPOSED', 'DESTROYED', 'RELEASED']
+    if checkoutBlock.get_state() in reasons:
+        print(f"The requested block is {checkoutBlock.get_state()}. Further action is forbidden")
+        sys.exit(1)
     
     # Nab hash of the previous block
     prevBlockHash = blockchain.chain[-1].hash_block()
@@ -130,22 +130,27 @@ def handle_checkin(args):
     checkinBlock = None
     timestampFloat = maya.now().epoch
     timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
-
+    searchID = str(args.item_id)
+    
     # loop to find matching blocks
     for block in blockchain.chain:
-        if args.item_id == block.get_evidence_id():
+        if searchID == block.get_evidence_id():
             checkinBlock = block
     
     # Return if the item id does not exist
     if checkinBlock == None:
         print(f"Item ID {args.item_id} does not exist")
-        return
+        sys.exit(1)
     
-    # # Evidence items that are either disposed, destroyed, or released cannot be checkedout
-    # reasons = ['DISPOSED', 'DESTROYED', 'RELEASED']
-    # if checkinBlock.get_state() in reasons:
-    #     print(f"The requested block is {checkinBlock.get_state()}. Further action is forbidden")
-    #     return
+    if checkinBlock.get_state() == 'CHECKEDIN':
+        print(f"Cannot checkin items that are already checkedin")
+        sys.exit(1)
+    
+    # Evidence items that are either disposed, destroyed, or released cannot be checkedout
+    reasons = ['DISPOSED', 'DESTROYED', 'RELEASED']
+    if checkinBlock.get_state() in reasons:
+        print(f"The requested block is {checkinBlock.get_state()}. Further action is forbidden")
+        sys.exit(1)
     
     # Nab hash of the previous block
     prevBlockHash = blockchain.chain[-1].hash_block()
@@ -279,13 +284,13 @@ def handle_remove(args):
     reasons = ['DISPOSED', 'DESTROYED', 'RELEASED']
     if args.reason not in reasons:
         print(f"Invalid reason. Must be one of: {', '.join(reasons)}")
-        return
+        sys.exit(1)
     
-    # Check if owner is given if the reason is RELEASED
-    if args.reason == 'RELEASED':
-        if not args.owner:
-            print("Information about the lawful owner must be given to release an evidence item")
-            return
+    # # Check if owner is given if the reason is RELEASED
+    # if args.reason == 'RELEASED':
+    #     if not args.owner:
+    #         print("Information about the lawful owner must be given to release an evidence item")
+    #         return
 
     # Find the first instance of a matching block, break
     for block in reversed(blockchain.chain):
@@ -296,12 +301,12 @@ def handle_remove(args):
     # If a block with the desired item id does not exist
     if not blockToRemove:
         print(f"Item ID {args.item_id} does not exist")
-        return
+        sys.exit(1)
     
     # If the block is not checked in, it cannot be removed
     if blockToRemove.get_state() != 'CHECKEDIN':
         print(f"Only checkedin items can be removed")
-        return
+        sys.exit(1)
     
     timestampFloat = maya.now().epoch
     timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
