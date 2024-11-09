@@ -39,11 +39,10 @@ def encrypt_evidence_ID(evidenceID):
     """
     Encrypts evidence ID
     """
-    evidenceID = str(evidenceID)
-    #I added padding because it wasnt the right length - Ken
-    evidenceID = evidenceID.ljust(16, '0') if len(evidenceID) < 16 else evidenceID[:16]
-    #This line is because if you make it into int, sometimes the number get too big
-    evidenceIDBytes = struct.pack('>Q', int(evidenceID[:10]))
+    # Fixed logic in this function (we were padding BEFORE we encrypted causing issues)
+    # 
+    evidenceID = str(int(evidenceID))
+    evidenceIDBytes = struct.pack('>Q', int(evidenceID))  # Pack the raw number
     paddedEvidenceID = evidenceIDBytes.ljust(16, b'\x00')
     cipher = AES.new(AES_KEY, AES.MODE_ECB)
     encryptedEvidenceID = cipher.encrypt(paddedEvidenceID)
@@ -57,5 +56,6 @@ def decrypt_evidence_ID(encryptedHex):
     encryptedEvidenceIDBytes = bytes.fromhex(encryptedHex)
     cipher = AES.new(AES_KEY, AES.MODE_ECB)
     decryptedEvidenceIDPadded = cipher.decrypt(encryptedEvidenceIDBytes)
-    evidenceID = struct.unpack('>I', decryptedEvidenceIDPadded[:4])[0]
+    # Mismatch between encrypt evidence id - changed to >Q and to 8 bytes as in encrypt
+    evidenceID = struct.unpack('>Q', decryptedEvidenceIDPadded[:8])[0]
     return str(evidenceID)
