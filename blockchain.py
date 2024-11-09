@@ -1,7 +1,7 @@
 import os
 import struct
 from block import Block
-
+import sys
 class Blockchain:
     def __init__(self):
         """
@@ -33,21 +33,24 @@ class Blockchain:
         Read the blockchain file (from binary) and appends it to the list (does not write)
         """
         # Size of a block - without the data field
-        blockHeaderSize = struct.calcsize("32s d 32s 32s 12s 12s 12s I")
-        while True:
-            blockHeader = file.read(blockHeaderSize) # Read by size
+        try:
+            blockHeaderSize = struct.calcsize("32s d 32s 32s 12s 12s 12s I")
+            while True:
+                blockHeader = file.read(blockHeaderSize) # Read by size
 
-            if not blockHeader:
-                break
+                if not blockHeader:
+                    break
 
-            _, _, _, _, _, _, _, D_length = struct.unpack(
-                "32s d 32s 32s 12s 12s 12s I", blockHeader
-            )
+                _, _, _, _, _, _, _, D_length = struct.unpack(
+                    "32s d 32s 32s 12s 12s 12s I", blockHeader
+                )
 
-            dataField = file.read(D_length)
-            blockBinaryData = blockHeader + dataField
-            block = Block.from_binary(blockBinaryData)
-            self.chain.append(block)
+                dataField = file.read(D_length)
+                blockBinaryData = blockHeader + dataField
+                block = Block.from_binary(blockBinaryData)
+                self.chain.append(block)
+        except:
+            sys.exit(1)
 
     def create_initial_block(self):
         """

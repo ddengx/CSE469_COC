@@ -43,7 +43,7 @@ def encrypt_evidence_ID(evidenceID):
     #I added padding because it wasnt the right length - Ken
     evidenceID = evidenceID.ljust(16, '0') if len(evidenceID) < 16 else evidenceID[:16]
     #This line is because if you make it into int, sometimes the number get too big
-    evidenceIDBytes = struct.pack('>I', int(evidenceID[:10]))
+    evidenceIDBytes = struct.pack('>Q', int(evidenceID[:10]))
     paddedEvidenceID = evidenceIDBytes.ljust(16, b'\x00')
     cipher = AES.new(AES_KEY, AES.MODE_ECB)
     encryptedEvidenceID = cipher.encrypt(paddedEvidenceID)
