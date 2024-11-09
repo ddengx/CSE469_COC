@@ -214,7 +214,6 @@ def handle_show_items(args):
         return
 
     print(f"Item IDs for Case '{args.case_id}':")
-    print()
     itemIDList = list(itemIDSet) # Convert to list because I want the prints to be numbered LMAO
     for index, itemID in enumerate(itemIDList, start=1):
         print(f"Item ID {index}: {itemID}")
