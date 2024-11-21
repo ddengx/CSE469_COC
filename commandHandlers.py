@@ -4,6 +4,8 @@ from blockchain import Blockchain
 import maya
 import sys
 import hashlib
+import uuid
+import json
 
 def handle_init():
     Blockchain()
@@ -12,12 +14,12 @@ def handle_add(args):
     """
     Handle the 'add' command to add a block to the blockchain.
     """
-    if not verify_password(args.password)[1]:
+    if not verify_password(args.password,args.creator)[1]:
         print('> Invalid password')
         sys.exit(1)
 
     blockchain = Blockchain()
-    role = verify_password(args.password)[0]
+    role = verify_password(args.password,args.creator)[0]
 
     if len(blockchain.chain) == 0:
         print("Blockchain empty, please initialize first.")
@@ -188,7 +190,7 @@ def handle_show_cases():
     for block in blockchain.chain[1:]:
         cases.add(block.caseID) # Since password is not an argument, show the encrypted hex value
     for case in cases:
-        print(f"Case ID: {case}")
+        print(uuid.UUID(case))
 
 def handle_show_items(args):
     """
@@ -213,10 +215,9 @@ def handle_show_items(args):
         print(f"Case number '{args.case_id}' does not exist")
         return
 
-    print(f"Item IDs for Case '{args.case_id}':")
     itemIDList = list(itemIDSet) # Convert to list because I want the prints to be numbered LMAO
     for index, itemID in enumerate(itemIDList, start=1):
-        print(f"Item ID {index}: {itemID}")
+        print(int(itemID))
 
 def handle_show_history(args):
     """
@@ -225,7 +226,10 @@ def handle_show_history(args):
     Password is optional: Display as hex if password is invalid or there is none
     """
     blockchain = Blockchain()
-
+    if not verify_password(args.password)[1]:
+        print("Invalid password")
+        sys.exit(1)
+        return
     # Get all blocks excluding the initial block
     filteredBlocks = blockchain.chain[1:]
     
@@ -406,11 +410,15 @@ def handle_verify():
     
     print("State of blockchain: CLEAN")
 
-def verify_password(passwordArg):
+
+def verify_password(passwordArg, creator="none"):
     """
     Verify if a parsed password is valid or not
     Returns a tuple of [role, isValid]
     """
+    
+    #THE CREATOR ROLE IS FOR VERIFYING LATER - KEN
+    
     # Grab the environmental variables
     roles = {
         'POLICE': os.environ.get('BCHOC_PASSWORD_POLICE'),
@@ -426,11 +434,11 @@ def verify_password(passwordArg):
 
     role = None
     isValid = False
-
+        
     # Find the associated key
     for key, value in roles.items():
         if value == passwordArg:
             role = key
             isValid = True
-
+            
     return role, isValid
