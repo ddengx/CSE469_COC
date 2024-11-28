@@ -49,7 +49,7 @@ class Blockchain:
                 blockBinaryData = blockHeader + dataField
                 block = Block.from_binary(blockBinaryData)
                 self.chain.append(block)
-        except:
+        except Exception as e:
             sys.exit(1)
 
     def create_initial_block(self):

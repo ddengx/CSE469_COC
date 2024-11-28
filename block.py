@@ -65,7 +65,6 @@ class Block:
         )
 
         dataField = binData[blockHeaderSize:blockHeaderSize + D_length]
-
         # Strip any 0's and decrypt case ID
         # print(f"Before Strip {caseID}")
         caseID = caseID.rstrip(b'\0')

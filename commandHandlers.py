@@ -7,6 +7,10 @@ import hashlib
 import uuid
 import json
 
+#because maya freaking SUCKS balls
+from datetime import datetime, timezone
+
+
 def handle_init():
     Blockchain()
 
@@ -26,7 +30,7 @@ def handle_add(args):
         return
 
     timestampFloat = maya.now().epoch
-    timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
+    timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('Z', '.0Z')
 
     # Get the hash of the initial block
     prevBlockHash = blockchain.chain[-1].hash_block()
@@ -79,7 +83,7 @@ def handle_checkout(args):
     blockchain = Blockchain()
     checkoutBlock = None
     timestampFloat = maya.now().epoch
-    timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
+    timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('Z', '.0Z')
     searchID = str(args.item_id)
     
     # loop to find matching blocks
@@ -126,12 +130,11 @@ def handle_checkin(args):
     if not verify_password(args.password)[1]:
         print("Invalid password")
         return
-
     role = verify_password(args.password)[0] # Role of the password
     blockchain = Blockchain()
     checkinBlock = None
     timestampFloat = maya.now().epoch
-    timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
+    timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('Z', '.0Z')
     searchID = str(args.item_id)
     
     # loop to find matching blocks
@@ -225,13 +228,15 @@ def handle_show_history(args):
     Optional arguments to filter: Case ID, Item ID, reverse flag
     Password is optional: Display as hex if password is invalid or there is none
     """
+    
     blockchain = Blockchain()
     if not verify_password(args.password)[1]:
         print("Invalid password")
         sys.exit(1)
         return
     # Get all blocks excluding the initial block
-    filteredBlocks = blockchain.chain[1:]
+    #Adjust to include 
+    filteredBlocks = blockchain.chain
     
     # Filter by case id if provided
     if args.case_id:
@@ -253,6 +258,7 @@ def handle_show_history(args):
     if args.num_entries:
         filteredBlocks = filteredBlocks[:args.num_entries]
 
+
     # Display
     for block in filteredBlocks:
         # Display case id and item id as hex if no password is provided
@@ -266,9 +272,9 @@ def handle_show_history(args):
         print(f"Case: {caseID}")
         print(f"Item: {evidenceID}")
         print(f"Action: {block.get_state()}")
-        print(f"Time: {maya.MayaDT(block.get_timestamp()).iso8601()}")
+        print(f"Time: {maya.MayaDT(block.get_timestamp()).iso8601().replace('Z', '.0Z')}")
         print()
-
+        
 def handle_remove(args):
     """
     "Removes" an item from the chain (prevents further action to the block)
@@ -312,7 +318,7 @@ def handle_remove(args):
         sys.exit(1)
     
     timestampFloat = maya.now().epoch
-    timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('+00:00', 'Z')
+    timestampDisplay = maya.MayaDT(timestampFloat).iso8601().replace('Z', '.0Z')
     prevBlockHash = blockchain.chain[-1].hash_block()
 
     newBlock = Block(
