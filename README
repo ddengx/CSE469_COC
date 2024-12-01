@@ -4,3 +4,6 @@ Description:
 
 This project implements a digital chain of custody system using blockchain technology. It ensures secure, immutable, and verifiable tracking of evidence and associated actions for legal and forensic purposes. The system maintains integrity and accountability by recording every transaction (check-in, check-out, removal) in a distributed ledger format.
 
+Run:
+make
+./bchoc init
